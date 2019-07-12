@@ -54,42 +54,6 @@ Add-ITGlueBaseURI -base_uri $ITGbaseURI
 # Functions
 #
 
-function Try
-{
-    param
-    (
-        [ScriptBlock]$Command = $(throw "The parameter -Command is required."),
-        [ScriptBlock]$Catch   = { throw $_ },
-        [ScriptBlock]$Finally = {}
-    )
-    
-    & {
-        $local:ErrorActionPreference = "SilentlyContinue"
-        
-        trap
-        {
-            trap
-            {
-                & {
-                    trap { throw $_ }
-                    &$Finally
-                }
-                
-                throw $_
-            }
-            
-            $_ | & { &$Catch }
-        }
-        
-        &$Command
-    }
-
-    & {
-        trap { throw $_ }
-        &$Finally
-    }
-}
-
 function Get-ITGlueID($ServerName){
 
 (Get-ITGlueConfigurations -filter_name $ServerName).data.id 
@@ -357,14 +321,18 @@ $vmBiosSettingsTableData = (Get-VMBios * -ErrorAction SilentlyContinue).foreach{
 Write-Output "Generation 1 done..."
 
 # Generation 2
-$vmBiosSettingsTableData += ( Try -Command {Get-VMFirmware * -ErrorAction SilentlyContinue} -Catch{'Get-VMFirmware Failed, may not be Gen2'} -Finally{}).foreach{
+Try {$vmBiosSettingsTableData += ( Get-VMFirmware * -ErrorAction SilentlyContinue).foreach{
     '<tr>
         <td>{0}</td>
         <td>{1}</td>
         <td>{2}</td>
         <td>{3}</td>
         <td>Gen 2</td>
-    </tr>' -f $VMs[$_.VMName].htmlname, ($_.BootOrder.BootType | Out-String).Replace([Environment]::NewLine, ', ').TrimEnd(', '), $_.PauseAfterBootFailure, $_.SecureBoot}
+    </tr>' -f $VMs[$_.VMName].htmlname, ($_.BootOrder.BootType | Out-String).Replace([Environment]::NewLine, ', ').TrimEnd(', '), $_.PauseAfterBootFailure, $_.SecureBoot}}
+    catch {
+    'Get-VMFirmware Failed, may not be Gen2'
+    }
+
 Write-Output "Generation 2 done..."
 
 $vmBIOSSettingsHTML = '<div>
@@ -435,9 +403,6 @@ $object | Add-Member -MemberType NoteProperty -Name VmSnapshot -Value $vmSnapsho
 $object | Add-Member -MemberType NoteProperty -Name BIOS -Value $vmBiosSettingsTableData
 $object | Add-Member -MemberType NoteProperty -Name NICIPs -Value $guestNICsIPsHTML
 $PSObject += $object
-
-
-
 
 $existingAssets = @()
 $existingAssets += GetAllITGItems -Resource "flexible_assets?filter[organization_id]=$ITGlueOrganisation&filter[flexible_asset_type_id]=$assetTypeID"
