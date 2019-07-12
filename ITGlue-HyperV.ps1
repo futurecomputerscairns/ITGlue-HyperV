@@ -54,6 +54,42 @@ Add-ITGlueBaseURI -base_uri $ITGbaseURI
 # Functions
 #
 
+function Try
+{
+    param
+    (
+        [ScriptBlock]$Command = $(throw "The parameter -Command is required."),
+        [ScriptBlock]$Catch   = { throw $_ },
+        [ScriptBlock]$Finally = {}
+    )
+    
+    & {
+        $local:ErrorActionPreference = "SilentlyContinue"
+        
+        trap
+        {
+            trap
+            {
+                & {
+                    trap { throw $_ }
+                    &$Finally
+                }
+                
+                throw $_
+            }
+            
+            $_ | & { &$Catch }
+        }
+        
+        &$Command
+    }
+
+    & {
+        trap { throw $_ }
+        &$Finally
+    }
+}
+
 function Get-ITGlueID($ServerName){
 
 (Get-ITGlueConfigurations -filter_name $ServerName).data.id 
@@ -321,7 +357,7 @@ $vmBiosSettingsTableData = (Get-VMBios * -ErrorAction SilentlyContinue).foreach{
 Write-Output "Generation 1 done..."
 
 # Generation 2
-$vmBiosSettingsTableData += ( Try{Get-VMFirmware * -ErrorAction SilentlyContinue}catch{'Get-VMFirmware Failed, may not be Gen2'}).foreach{
+$vmBiosSettingsTableData += ( Try -Command {Get-VMFirmware * -ErrorAction SilentlyContinue} -Catch{'Get-VMFirmware Failed, may not be Gen2'}).foreach{
     '<tr>
         <td>{0}</td>
         <td>{1}</td>
