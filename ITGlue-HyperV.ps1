@@ -40,6 +40,7 @@ $certCallback = @"
 $assettypeID = 134744
 
 $ITGbaseURI = "https://api.itglue.com"
+$ErrorActionPreference = "SilentlyContinue"
  
 $headers = @{
     "x-api-key" = $key
