@@ -357,7 +357,7 @@ $vmBiosSettingsTableData = (Get-VMBios * -ErrorAction SilentlyContinue).foreach{
 Write-Output "Generation 1 done..."
 
 # Generation 2
-$vmBiosSettingsTableData += ( Try -Command {Get-VMFirmware * -ErrorAction SilentlyContinue} -Catch{'Get-VMFirmware Failed, may not be Gen2'}).foreach{
+$vmBiosSettingsTableData += ( Try -Command {Get-VMFirmware * -ErrorAction SilentlyContinue} -Catch{'Get-VMFirmware Failed, may not be Gen2'} -Finally{}).foreach{
     '<tr>
         <td>{0}</td>
         <td>{1}</td>
