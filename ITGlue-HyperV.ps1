@@ -216,6 +216,8 @@ Write-Output "[2/9] Host's disk data done."
 
 # Virtual swtiches / "Virtual switches"
 Write-Output "Getting virtual swtiches..."
+
+$switches = Get-VMSwitch
 $virtualSwitchsHTML = '<div>
     <table>
         <tbody>
@@ -227,7 +229,7 @@ $virtualSwitchsHTML = '<div>
             {0}
         </tbody>
     </table>
-</div>' -f ((Get-VMSwitch).foreach{
+</div>' -f (($switches).foreach{
     '<tr>
         <td>{0}</td>
         <td>{1}</td>
@@ -251,7 +253,7 @@ $guestInformationHTML = '<div>
         </tbody>
     </table>
 </div>' -f ($VMs.GetEnumerator().foreach{
-    $diskSize = 0
+    $diskSize = @()
     ($_.value.vm.HardDrives | Get-VHD).FileSize.foreach{$diskSize += $_}
     $diskSize = [Math]::Round($diskSize/1GB)
     '<tr>
