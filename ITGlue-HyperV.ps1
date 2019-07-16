@@ -253,9 +253,11 @@ $guestInformationHTML = '<div>
         </tbody>
     </table>
 </div>' -f ($VMs.GetEnumerator().foreach{
-    $diskSize = @()
+    
     $disksize = 0
-    ($_.value.vm.HardDrives | Get-VHD).FileSize.foreach{$diskSize += $_}
+    $alldrives = @()
+    $alldrives = ($_.value.vm.HardDrives | Get-VHD).FileSize
+    $alldrives.foreach{$diskSize += $_}
     $diskSize = [Math]::Round($diskSize/1GB)
     '<tr>
         <td>{0}</td>
